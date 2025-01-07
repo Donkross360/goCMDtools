@@ -29,6 +29,7 @@ func main() {
 	list := flag.Bool("list", false, "List all tasks")
 	complete := flag.Int("complete", 0, "Item to be completed")
 	delete := flag.Int("del", 0, "Item to be deleted")
+	getFull := flag.Bool("full", false, "Get all details of each task")
 
 	flag.Parse()
 
@@ -51,6 +52,12 @@ func main() {
 	case *list:
 		// list current to do items
 		fmt.Print(l)
+
+	case *getFull:
+
+		for _, item := range *l {
+			fmt.Printf(" %s completed?:%v created:%s\n", item.Task, item.Done, item.CreatedAt.Format("2006-01-02 15:04:05"))
+		}
 
 	case *complete > 0:
 		// Complete the given item
