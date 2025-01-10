@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// to normalize paths before comparison for windows
 func normalizePath(p string) string {
 	return strings.ReplaceAll(p, "\\", "/")
 }
