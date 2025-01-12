@@ -6,3 +6,9 @@ go build main.go -o mdp
 ./autopreview.sh README.md
 ```
 
+## Walk.v3:
+```
+ go run . -root /tmp/gomisc/ -ext .go -archive /tmp/gomisc_bkp/ -del -log deleted_gomisc.log
+
+ ```
+
