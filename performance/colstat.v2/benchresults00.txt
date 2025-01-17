@@ -1,0 +1,7 @@
+goos: windows
+goarch: amd64
+pkg: performance/colstats
+cpu: Intel(R) Core(TM) i7-4910MQ CPU @ 2.90GHz
+BenchmarkRun-8   	      10	 697362570 ns/op
+PASS
+ok  	performance/colstats	7.907s
