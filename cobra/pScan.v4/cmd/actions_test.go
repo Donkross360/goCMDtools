@@ -127,7 +127,7 @@ func TestIntegration(t *testing.T) {
 	expectedOut := ""
 
 	for _, v := range hosts {
-		expectedOut += fmt.Sprintf("Deleted host: %s\n", v)
+		expectedOut += fmt.Sprintf("Added host: %s\n", v)
 	}
 
 	expectedOut += strings.Join(hosts, "\n")
