@@ -4,12 +4,74 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
 	"cobra/pScan.v5/scan"
 )
+
+func TestScanAction(t *testing.T) {
+	// define hosts for scan test
+	hosts := []string{
+		"localhost",
+		"unknownhostoutthere",
+	}
+
+	// setup scan test
+	tf, cleanup := setup(t, hosts, true)
+	defer cleanup()
+
+	ports := []int{}
+
+	// Init ports, 1 open, 1 closed
+	for i := 0; i < 2; i++ {
+		ln, err := net.Listen("tcp", net.JoinHostPort("localhost", "0"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		defer ln.Close()
+
+		_, portStr, err := net.SplitHostPort(ln.Addr().String())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ports = append(ports, port)
+		if i == 1 {
+			ln.Close()
+		}
+	}
+
+	// define expected output for scan
+	expectedOut := fmt.Sprintln("localhost:")
+	expectedOut += fmt.Sprintf("\t%d: open\n", ports[0])
+	expectedOut += fmt.Sprintf("\t%d: closed\n", ports[1])
+	expectedOut += fmt.Sprintln()
+	expectedOut += fmt.Sprintln("unknownhostoutther: Host not found")
+	expectedOut += fmt.Sprintln()
+
+	// define var tpo capture scan
+	var out bytes.Buffer
+
+	// Execute scan and capture output
+	if err := scanAction(&out, tf, ports); err != nil {
+		t.Fatalf("expected no error, got %q\n", err)
+	}
+
+	//Test scan output
+	if out.String() != expectedOut {
+		t.Errorf("expected output %q, got %q\n", expectedOut, out.String())
+	}
+}
 
 func setup(t *testing.T, hosts []string, initList bool) (string, func()) {
 	// Create temp file
@@ -136,6 +198,11 @@ func TestIntegration(t *testing.T) {
 	expectedOut += strings.Join(hostsEnd, "\n")
 	expectedOut += fmt.Sprintln()
 
+	for _, v := range hostsEnd {
+		expectedOut += fmt.Sprintf("%s: Host not found\n", v)
+		expectedOut += fmt.Sprintln()
+	}
+
 	// Add hosts to the list
 	if err := addAction(&out, tf, hosts); err != nil {
 		t.Fatalf("expected no error, got %q\n", err)
@@ -154,6 +221,11 @@ func TestIntegration(t *testing.T) {
 	//List hosts after delete
 	if err := listAction(&out, tf, nil); err != nil {
 		t.Fatalf("expected no error, got %q\n", err)
+	}
+
+	// scan hosts
+	if err := scanAction(&out, tf, nil); err != nil {
+		t.Fatalf("expected output no error, got %q\n", err)
 	}
 
 	// Test integration output
