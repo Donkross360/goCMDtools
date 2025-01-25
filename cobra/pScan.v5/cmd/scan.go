@@ -58,7 +58,7 @@ func printResults(out io.Writer, results []scan.Results) error {
 		message += fmt.Sprintln()
 
 		for _, p := range r.PortState {
-			message += fmt.Sprintf("%d: %s\n", p.Port, p.Open)
+			message += fmt.Sprintf("\t%d: %s\n", p.Port, p.Open)
 		}
 
 		message += fmt.Sprintln()
