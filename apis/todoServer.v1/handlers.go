@@ -99,6 +99,12 @@ func patchHandler(w http.ResponseWriter, r *http.Request, list *todo.List, id in
 		return
 	}
 
+	list.Complete(id)
+	if err := list.Save(todoFile); err != nil {
+		replyError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	replyTextContent(w, r, http.StatusNoContent, "")
 }
 
