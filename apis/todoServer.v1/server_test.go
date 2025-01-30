@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"io"
 	"net/http"
@@ -64,8 +65,8 @@ func TestGet(t *testing.T) {
 		expContent string
 	}{
 		{name: "GetRoot", path: "/", expCode: http.StatusOK, expContent: "There's an API here"},
-		{name: "GetAll", path: "/todo", expCode: http.StatusOK, expItems: 2, expContent: "Task number 1"},
-		{name: "GetOne", path: "/todo/1", expCode: http.StatusOK, expItems: 1, expContent: "Task number 1"},
+		{name: "GetAll", path: "/todo", expCode: http.StatusOK, expItems: 2, expContent: "Task number: 1."},
+		{name: "GetOne", path: "/todo/1", expCode: http.StatusOK, expItems: 1, expContent: "Task number: 1."},
 		{name: "NotFound", path: "/todo/500", expCode: http.StatusNotFound},
 	}
 
@@ -205,9 +206,63 @@ func TestDelete(t *testing.T) {
 			t.Errorf("expected 1 item, got %d.", len(resp.Results))
 		}
 
-		expTask := "Task number 2."
+		expTask := "Task number: 2."
 		if resp.Results[0].Task != expTask {
 			t.Errorf("expected %q, got %q.", expTask, resp.Results[0].Task)
 		}
 	})
+}
+
+func TestComplete(t *testing.T) {
+	url, cleanup := setupAPI(t)
+	defer cleanup()
+
+	t.Run("Complete", func(t *testing.T) {
+		u := fmt.Sprintf("%s/todo/1?complete", url)
+		req, err := http.NewRequest(http.MethodPatch, u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		r, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if r.StatusCode != http.StatusNoContent {
+			t.Fatalf("expected %q, got %q.", http.StatusText(http.StatusNoContent), http.StatusText(r.StatusCode))
+		}
+	})
+
+	t.Run("CheckComplete", func(t *testing.T) {
+		r, err := http.Get(url + "/todo")
+		if err != nil {
+			t.Error(err)
+		}
+
+		if r.StatusCode != http.StatusOK {
+			t.Fatalf("expected %q, got %q.", http.StatusText(http.StatusOK), http.StatusText(r.StatusCode))
+		}
+
+		var resp todoResponse
+		if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+		if len(resp.Results) != 2 {
+			t.Errorf("expected 2 items, got %d.", len(resp.Results))
+		}
+
+		if !resp.Results[0].Done {
+			t.Error("expected Item 1 to be completed")
+		}
+		if resp.Results[1].Done {
+			t.Error("expected Item 2 not to be completed")
+		}
+	})
+}
+
+func TestMain(m *testing.M) {
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
 }
