@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	// "log"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -164,6 +163,51 @@ func TestAdd(t *testing.T) {
 		r.Body.Close()
 		if resp.Results[0].Task != taskName {
 			t.Errorf("expected %q, got %q.", taskName, resp.Results[0].Task)
+		}
+	})
+}
+
+func TestDelete(t *testing.T) {
+	url, cleanup := setupAPI(t)
+	defer cleanup()
+
+	t.Run("Delete", func(t *testing.T) {
+		u := fmt.Sprintf("%s/todo/1", url)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+		if r.StatusCode != http.StatusNoContent {
+			t.Fatalf("expected %q, got %q.", http.StatusText(http.StatusNoContent), http.StatusText(r.StatusCode))
+		}
+	})
+
+	t.Run("CheckDelete", func(t *testing.T) {
+		r, err := http.Get(url + "/todo")
+		if err != nil {
+			t.Error(err)
+		}
+
+		if r.StatusCode != http.StatusOK {
+			t.Fatalf("expcted %q, got %q.", http.StatusText(http.StatusOK), http.StatusText(r.StatusCode))
+		}
+
+		var resp todoResponse
+		if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+		if len(resp.Results) != 1 {
+			t.Errorf("expected 1 item, got %d.", len(resp.Results))
+		}
+
+		expTask := "Task number 2."
+		if resp.Results[0].Task != expTask {
+			t.Errorf("expected %q, got %q.", expTask, resp.Results[0].Task)
 		}
 	})
 }
