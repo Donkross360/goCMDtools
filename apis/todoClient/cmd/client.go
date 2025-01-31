@@ -10,32 +10,28 @@ import (
 )
 
 var (
-	ErrConnection      = errors.New("Connection error")
-	ErrNotFound        = errors.New("Not found")
-	ErrInvalidResponse = errors.New("Ivalid server response")
-	ErrInvalid         = errors.New("Invalid data")
-	ErrNotNumber       = errors.New("Not a number")
+	ErrConnection      = errors.New("connection error")
+	ErrNotFound        = errors.New("not found")
+	ErrInvalidResponse = errors.New("invalid server response")
+	ErrInvalid         = errors.New("invalid data")
+	ErrNotNumber       = errors.New("not a number")
 )
 
 type item struct {
-	Task        string
-	Done        bool
-	CreatedAt   time.Time
-	completedAt time.Time
+	Task        string    `json:"Task"`
+	Done        bool      `json:"Done"`
+	CreatedAt   time.Time `json:"CreatedAt"`
+	CompletedAt time.Time `json:"CompletedAt"` // ✅ Fixed field name (was lowercase)
 }
 
 type response struct {
-	Result       []item `json:"result"`
+	Results      []item `json:"results"` // ✅ Changed from "result" to "results"
 	Date         int    `json:"date"`
 	TotalResults int    `json:"total_results"`
 }
 
 func newClient() *http.Client {
-	c := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	return c
+	return &http.Client{Timeout: 10 * time.Second}
 }
 
 func getItems(url string) ([]item, error) {
@@ -43,7 +39,6 @@ func getItems(url string) ([]item, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrConnection, err)
 	}
-
 	defer r.Body.Close()
 
 	if r.StatusCode != http.StatusOK {
@@ -54,7 +49,7 @@ func getItems(url string) ([]item, error) {
 
 		err = ErrInvalidResponse
 		if r.StatusCode == http.StatusNotFound {
-			err = ErrNotNumber
+			err = ErrNotFound // ✅ Fixed error type
 		}
 
 		return nil, fmt.Errorf("%w: %s", err, msg)
@@ -69,11 +64,10 @@ func getItems(url string) ([]item, error) {
 		return nil, fmt.Errorf("%w: No results found", ErrNotFound)
 	}
 
-	return resp.Result, nil
+	return resp.Results, nil // ✅ Fixed return value (was `resp.Result`)
 }
 
 func getAll(apiRoot string) ([]item, error) {
 	u := fmt.Sprintf("%s/todo", apiRoot)
-
 	return getItems(u)
 }

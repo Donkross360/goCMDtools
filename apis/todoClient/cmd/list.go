@@ -30,6 +30,7 @@ func listAction(out io.Writer, apiRoot string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("DEBUG: Retrieved %d items from API\n", len(items)) // Debugging
 
 	return printAll(out, items)
 }
