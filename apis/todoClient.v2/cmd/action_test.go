@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -106,5 +107,53 @@ func TestViewAction(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func TestAddAction(t *testing.T) {
+	expURLPath := "/todo"
+	expMethod := http.MethodPost
+	expBody := "{\"task\":\"Task 1\"}\n"
+	expContentType := "application/json"
+	expOut := "Added task \"Task 1\" to the list.\n"
+	args := []string{"Task", "1"}
+
+	// Instantiate a test server for Add test
+	url, cleanup := mockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != expURLPath {
+			t.Errorf("expected path %q, got %q", expURLPath, r.URL.Path)
+		}
+
+		if r.Method != expMethod {
+			t.Errorf("expected method %q, got %q", expMethod, r.Method)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+
+		if string(body) != expBody {
+			t.Errorf("expected body %q, got %q", expBody, string(body))
+		}
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType != expContentType {
+			t.Errorf("expected Content-Type %q, got %q", expContentType, contentType)
+		}
+
+		w.WriteHeader(testResp["created"].Status)
+		fmt.Fprintln(w, testResp["created"].Body)
+	})
+	defer cleanup()
+
+	// Execute Add test
+	var out bytes.Buffer
+	if err := addAction(&out, url, args); err != nil {
+		t.Fatalf("expected no error, got %q.", err)
+	}
+	if expOut != out.String() {
+		t.Errorf("expected output %q, got %q", expOut, out.String())
 	}
 }
