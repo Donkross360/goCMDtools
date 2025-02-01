@@ -30,6 +30,8 @@ type response struct {
 	TotalResults int    `json:"total_results"`
 }
 
+const timeFormat = "Jan/02 @15:04"
+
 func newClient() *http.Client {
 	return &http.Client{Timeout: 10 * time.Second}
 }
@@ -70,4 +72,19 @@ func getItems(url string) ([]item, error) {
 func getAll(apiRoot string) ([]item, error) {
 	u := fmt.Sprintf("%s/todo", apiRoot)
 	return getItems(u)
+}
+
+func getOne(apiRoot string, id int) (item, error) {
+	u := fmt.Sprintf("%s/todo/%d", apiRoot, id)
+
+	items, err := getItems(u)
+	if err != nil {
+		return item{}, err
+	}
+
+	if len(items) != 1 {
+		return item{}, fmt.Errorf("%w: invalid results", ErrInvalid)
+	}
+
+	return items[0], nil
 }
