@@ -1,28 +1,48 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // delCmd represents the del command
 var delCmd = &cobra.Command{
-	Use:   "del",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:          "del",
+	Short:        "A brief description of your command",
+	SilenceUsage: true,
+	Args:         cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		apiRoot := viper.GetString("api-root")
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("del called")
+		return delAction(os.Stdout, apiRoot, args[0])
 	},
+}
+
+func delAction(out io.Writer, apiRoot, arg string) error {
+	id, err := strconv.Atoi(arg)
+
+	if err != nil {
+		return fmt.Errorf("%w: Item id must be a number", ErrNotNumber)
+	}
+
+	if err := deleteItem(apiRoot, id); err != nil {
+		return err
+	}
+
+	return printDel(out, id)
+}
+
+func printDel(out io.Writer, id int) error {
+	_, err := fmt.Fprintf(out, "Item number %d deleted.\n", id)
+	return err
 }
 
 func init() {
