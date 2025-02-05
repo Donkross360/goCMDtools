@@ -162,7 +162,7 @@ func TestCompleteAction(t *testing.T) {
 	expURLPath := "/todo/1"
 	expMethod := http.MethodPatch
 	expQuery := "complete"
-	expOut := "Item number 1 marked as complete.\n"
+	expOut := "Item number 1 marked as completed.\n"
 	arg := "1"
 
 	// Instantiate a test server for complete test
@@ -212,6 +212,36 @@ func TestDelAction(t *testing.T) {
 
 	// Execute Del test
 	var out bytes.Buffer
+	if err := delAction(&out, url, arg); err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if expOut != out.String() {
+		t.Errorf("expected output %q, got %q", expOut, out.String())
+	}
+}
+
+func TestDeleteAction(t *testing.T) {
+	expURLPath := "/todo/1"
+	expMethod := http.MethodDelete
+	expOut := "Item number 1 deleted\n"
+	arg := "1"
+
+	// Instantiate a test sever for Del test
+	url, cleanup := mockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != expURLPath {
+			t.Errorf("expected path %q, got %q", expURLPath, r.URL.Path)
+		}
+		if r.Method != expMethod {
+			t.Errorf("expected method %q, got %q.", expMethod, r.Method)
+		}
+		w.WriteHeader(testResp["noContent"].Status)
+		fmt.Fprintln(w, testResp["noContent"].Body)
+	})
+	defer cleanup()
+
+	// Execute Del test
+	var out bytes.Buffer
+
 	if err := delAction(&out, url, arg); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
